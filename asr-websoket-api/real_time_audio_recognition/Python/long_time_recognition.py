@@ -31,8 +31,8 @@ class Client:
         if code != 90000:
             # 打印接口错误
             print(message)
-        if json.loads(message).get('data')['end_flag'] == 1:
-            print(json.loads(message).get('data')['nbest'][0])
+        if json.loads(message).get('end_flag') == 1:
+            print(json.loads(message).get('asr_text'))
 
     # 打印错误
     def on_error(slef, ws, error):
@@ -64,6 +64,7 @@ def prepare_data(args, access_token):
             asr_params['req_idx'] = -len(splited_data) + 1
         asr_params["audio_data"] = splited_data[i]
         data = {"access_token": access_token, "version": "1.0", "asr_params": asr_params}
+
         json_list.append(json.dumps(data))
 
     return json_list
@@ -77,6 +78,7 @@ def get_args():
     parser.add_argument('-file_path', type=str, required=True)
     parser.add_argument('--audio_format', type=str, default='wav')
     parser.add_argument('--sample_rate', type=str, default='16000')
+    parser.add_argument('--add_pct', type=str, default='true')
     args = parser.parse_args()
 
     return args
@@ -111,7 +113,7 @@ if __name__ == '__main__':
     # 准备数据
     data = prepare_data(args, access_token)
 
-    uri = "wss://openapi.data-baker.com/asr/wsapi/"
+    uri = "ws://192.168.1.21:39002"
     # 建立Websocket连接
     client = Client(data, uri)
     client.connect()
