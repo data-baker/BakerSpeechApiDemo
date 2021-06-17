@@ -92,26 +92,28 @@ def get_access_token(client_secret, client_id):
         response = requests.post(url)
         response.raise_for_status()
     except Exception as e:
-        print(e)
-        return
+        print(response.text)
+        raise Exception
     else:
         access_token = json.loads(response.text).get('access_token')
-
-    return access_token
+        return access_token
 
 
 if __name__ == '__main__':
-    args = get_args()
+    try:
+        args = get_args()
 
-    # 获取access_token
-    client_secret = args.client_secret
-    client_id = args.client_id
-    access_token = get_access_token(client_secret, client_id)
+        # 获取access_token
+        client_secret = args.client_secret
+        client_id = args.client_id
+        access_token = get_access_token(client_secret, client_id)
 
-    # 准备数据
-    data = prepare_data(args, access_token)
+        # 准备数据
+        data = prepare_data(args, access_token)
 
-    uri = "wss://openapi.data-baker.com/asr/wsapi/"
-    # 建立Websocket连接
-    client = Client(data, uri)
-    client.connect()
+        uri = "wss://openapi.data-baker.com/asr/wsapi/"
+        # 建立Websocket连接
+        client = Client(data, uri)
+        client.connect()
+    except Exception as e:
+        print(e)
