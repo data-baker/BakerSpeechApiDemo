@@ -78,7 +78,6 @@ def get_args():
     parser.add_argument('-file_path', type=str, required=True)
     parser.add_argument('--audio_format', type=str, default='wav')
     parser.add_argument('--sample_rate', type=str, default='16000')
-    parser.add_argument('--add_pct', type=str, default='true')
     args = parser.parse_args()
 
     return args
