@@ -84,7 +84,7 @@ def get_args():
     parser.add_argument('-file_save_path', type=str, required=True)
     parser.add_argument('--text', type=str, default=text)
     parser.add_argument('--audiotype', type=str, default='4')
-    parser.add_argument('--voice_name', type=str, default='Jingjing')
+    parser.add_argument('--voice_name', type=str, default='Lingling')
     args = parser.parse_args()
 
     return args
