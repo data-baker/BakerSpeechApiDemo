@@ -30,7 +30,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='ASR')
     parser.add_argument('-client_secret', type=str, required=True)
     parser.add_argument('-client_id', type=str, required=True)
-    parser.add_argument('-file_save_path', type=str, required=True)
+    parser.add_argument('-notify_url', type=str, required=True)
     parser.add_argument('--text', type=str, default=text)
     parser.add_argument('--voice_name', type=str, default='Lingling')
     parser.add_argument('--audiotype', type=str, default='6')
@@ -48,7 +48,8 @@ def main(args):
     # 新建任务
     voice_name = args.voice_name
     text = args.text
-    notify_url = 'http://82.157.6.4:8000/'
+    # 回调地址
+    notify_url = args.notify_url
     headers = {'access_token': access_token, 'text': text, 'voiceName': voice_name, 'notifyUrl': notify_url}
     send_text(json.dumps(headers))
     print("send text successfully!")
