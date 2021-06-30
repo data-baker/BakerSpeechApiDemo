@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 
 @app.route("/", methods=['GET', 'POST'])
-def hello_world():
+def get_audio():
     url = json.loads(request.get_data())['audioUrl']
     wget.download(url)
     print("task finished successfully")
