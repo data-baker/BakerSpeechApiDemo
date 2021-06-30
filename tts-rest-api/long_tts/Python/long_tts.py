@@ -19,7 +19,6 @@ def send_text(data):
     url = "https://openapi.data-baker.com/asynctts/synthesis/work"
     headers = {'content-type': 'application/json'}
     response = requests.post(url, data=data, headers=headers)
-    work_id = json.loads(response.text).get("data")['workId']
     code = json.loads(response.text).get("code")
     if code != 0:
         raise Exception(response.text)
@@ -52,7 +51,7 @@ def main(args):
     notify_url = 'http://82.157.6.4:8000/'
     headers = {'access_token': access_token, 'text': text, 'voiceName': voice_name, 'notifyUrl': notify_url}
     send_text(json.dumps(headers))
-
+    print("send text successfully!")
 
 if __name__ == '__main__':
     try:

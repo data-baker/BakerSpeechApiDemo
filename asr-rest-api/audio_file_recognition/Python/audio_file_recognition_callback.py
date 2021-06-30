@@ -2,8 +2,6 @@
 # coding: utf-8
 
 import argparse
-import time
-
 import requests
 import json
 
@@ -25,10 +23,10 @@ def get_text(headers):
     response = requests.post(url, headers=headers)
     text = json.loads(response.text).get("text")
     code = json.loads(response.text).get("code")
-    if code == 20000 or code == 20001:
-        return text
-    else:
+    if code != 20000:
         raise Exception(response.text)
+
+    return text
 
 
 # 创建识别任务，发送识别文件
@@ -69,18 +67,10 @@ if __name__ == '__main__':
         file = open(args.file_path, 'rb')
         audio_format = args.audio_format
         sample_rate = args.sample_rate
-        headers = {'access_token': access_token, 'audio_format': audio_format, 'sample_rate': sample_rate}
+        callback_url = 'http://82.157.6.4:8000/'
+        headers = {'access_token': access_token, 'audio_format': audio_format, 'sample_rate': sample_rate, 'callback_url': callback_url}
         task_id = create_task(file, headers)
+        print("create task successfully!")
 
-
-        # 主动轮询查询识别结果
-        recognition_headers = {'access_token': access_token, 'taskid': task_id}
-        while True:
-            text = get_text(recognition_headers)
-            if text:
-                break
-            else:
-                print('task is processing')
-        print(text['left_result'])
     except Exception as e:
         print(e)
