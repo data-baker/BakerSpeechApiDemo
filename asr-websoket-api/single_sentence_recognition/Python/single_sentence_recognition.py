@@ -28,6 +28,7 @@ class Client:
     # 接收消息
     def on_message(self, ws, message):
         code = json.loads(message).get("code")
+
         if code != 90000:
             # 打印接口错误
             print(message)

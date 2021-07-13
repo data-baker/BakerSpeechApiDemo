@@ -50,9 +50,10 @@ def main(args):
     text = args.text
     # 回调地址
     notify_url = args.notify_url
-    headers = {'access_token': access_token, 'text': text, 'voiceName': voice_name, 'notifyUrl': notify_url}
-    send_text(json.dumps(headers))
+    data = {'access_token': access_token, 'text': text, 'voiceName': voice_name, 'notifyUrl': notify_url}
+    send_text(json.dumps(data))
     print("send text successfully!")
+
 
 if __name__ == '__main__':
     try:

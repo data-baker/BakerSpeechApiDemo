@@ -35,7 +35,7 @@ def get_args():
     parser.add_argument('--audiotype', type=str, default='6')
     parser.add_argument('--domain', type=str, default='1')
     parser.add_argument('--language', type=str, default='zh')
-    parser.add_argument('--voice_name', type=str, default='Lingling')
+    parser.add_argument('--voice_name', type=str, default='Jiaojiao')
     args = parser.parse_args()
 
     return args
