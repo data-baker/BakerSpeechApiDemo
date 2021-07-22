@@ -1,6 +1,9 @@
 import argparse
 import json
 import base64
+import time
+from threading import Thread
+
 import requests
 import websocket
 
@@ -21,9 +24,14 @@ class Client:
 
     # 建立连接后发送消息
     def on_open(self, ws):
-        print("sending..")
-        for i in range(len(self.data)):
-            ws.send(self.data[i])
+        def run(*args):
+            for i in range(len(self.data)):
+                print('sending')
+                ws.send(self.data[i])
+                time.sleep(0.05)
+
+        Thread(target=run).start()
+
 
     # 接收消息
     def on_message(self, ws, message):
@@ -31,8 +39,8 @@ class Client:
         if code != 90000:
             # 打印接口错误
             print(message)
-        if json.loads(message).get('end_flag') == 1:
-            print(json.loads(message).get('asr_text'))
+
+        print(json.loads(message).get('asr_text'))
 
     # 打印错误
     def on_error(slef, ws, error):
@@ -77,7 +85,7 @@ def get_args():
     parser.add_argument('-client_id', type=str, required=True)
     parser.add_argument('-file_path', type=str, required=True)
     parser.add_argument('--audio_format', type=str, default='wav')
-    parser.add_argument('--sample_rate', type=str, default='16000')
+    parser.add_argument('--sample_rate', type=str, default='8000')
     args = parser.parse_args()
 
     return args
