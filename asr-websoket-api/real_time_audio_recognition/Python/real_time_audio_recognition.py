@@ -26,7 +26,6 @@ class Client:
     def on_open(self, ws):
         def run(*args):
             for i in range(len(self.data)):
-                print('sending')
                 ws.send(self.data[i])
                 time.sleep(0.05)
 
@@ -39,8 +38,8 @@ class Client:
         if code != 90000:
             # 打印接口错误
             print(message)
-
-        print(json.loads(message).get('asr_text'))
+        if json.loads(message).get('sentence_end') == "true":
+            print(json.loads(message).get('asr_text'))
 
     # 打印错误
     def on_error(slef, ws, error):
