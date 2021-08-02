@@ -1,6 +1,8 @@
 import argparse
 import json
 import base64
+from threading import Thread
+
 import requests
 import websocket
 import wave
@@ -25,8 +27,11 @@ class Client:
     # 建立连接后发送消息
     def on_open(self, ws):
         print("sending..")
-        for i in range(len(self.data)):
-            ws.send(self.data[i])
+        def run(*args):
+            for i in range(len(self.data)):
+                ws.send(self.data[i])
+
+        Thread(target=run).start()
 
     # 接收消息
     def on_message(self, ws, message):

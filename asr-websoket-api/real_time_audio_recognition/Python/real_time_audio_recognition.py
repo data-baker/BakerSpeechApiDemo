@@ -27,7 +27,6 @@ class Client:
         def run(*args):
             for i in range(len(self.data)):
                 ws.send(self.data[i])
-                time.sleep(0.05)
 
         Thread(target=run).start()
 
