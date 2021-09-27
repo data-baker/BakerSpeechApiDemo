@@ -202,19 +202,19 @@ public class AsrWebSocketDemo extends WebSocketListener {
 
     public static class ResponseData {
         /**
-         * 句子id，从1递增
+         * 状态码（4xxxx表示客户端参数错误，5xxxx表示服务端内部错误）
          */
         private Integer code;
         /**
-         * 句子id，从1递增
+         * 错误描述
          */
         private String message;
         /**
-         * 句子id，从1递增
+         * 任务id
          */
         private String trace_id;
         /**
-         * 句子id，从1递增
+         * 识别结果（code为90000时包含有效数据）
          */
         private String asr_text;
         /**
@@ -222,19 +222,15 @@ public class AsrWebSocketDemo extends WebSocketListener {
          */
         private Integer sentence_id;
         /**
-         * 句子id，从1递增
+         * 句子结束标志
          */
         private Boolean sentence_end;
 
         /**
-         * 句子id，从1递增
+         * 是否是最后一个数据块（0：否，1：是）
          */
         private Integer end_flag;
 
-        /**
-         * 可能不存在
-         */
-        private String s_id;
 
         public Integer getCode() {
             return code;
@@ -290,14 +286,6 @@ public class AsrWebSocketDemo extends WebSocketListener {
 
         public void setEnd_flag(Integer end_flag) {
             this.end_flag = end_flag;
-        }
-
-        public String getS_id() {
-            return s_id;
-        }
-
-        public void setS_id(String s_id) {
-            this.s_id = s_id;
         }
     }
 }

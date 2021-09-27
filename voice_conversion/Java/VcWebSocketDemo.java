@@ -168,7 +168,7 @@ public class VcWebSocketDemo extends WebSocketListener {
                     System.out.println(sdf.format(startTime) + "开始");
                     System.out.println(sdf.format(timeEnd.get()) + "结束");
                     System.out.println("耗时:" + (timeEnd.get().getTime() - startTime.getTime()) + "ms");
-                    System.out.println("本次识别traceId ==》" + jsonObject.getString("traceid"));
+                    System.out.println("本次声音转换traceId ==》" + jsonObject.getString("traceid"));
                     webSocket.close(1000, "");
                 }
             } else {
