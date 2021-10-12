@@ -89,8 +89,6 @@ def get_args():
     parser.add_argument('-client_id', type=str, required=True)
     parser.add_argument('-file_path', type=str, required=True)
     parser.add_argument('-file_save_path', type=str, required=True)
-    parser.add_argument('--text', type=str, default=text)
-    parser.add_argument('--audiotype', type=str, default='4')
     parser.add_argument('--voice_name', type=str, default='Vc_baklong')
     args = parser.parse_args()
 
