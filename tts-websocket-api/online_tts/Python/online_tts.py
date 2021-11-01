@@ -2,7 +2,6 @@ import argparse
 import json
 import base64
 from threading import Thread
-
 import requests
 import websocket
 import wave
@@ -28,8 +27,7 @@ class Client:
     def on_open(self, ws):
         print("sending..")
         def run(*args):
-            for i in range(len(self.data)):
-                ws.send(self.data[i])
+            ws.send(self.data)
 
         Thread(target=run).start()
 
@@ -45,11 +43,11 @@ class Client:
                 with wave.open('test.wav', 'wb') as wavfile:
                     wavfile.setparams((1, 2, 16000, 0, 'NONE', 'NONE'))
                     wavfile.writeframes(self.audio_data)
-                    ws.close()
-                    print("task finished successfully")
+                ws.close()
+                print("task finished successfully")
 
     # 打印错误
-    def on_error(slef, ws, error):
+    def on_error(self, ws, error):
         print("error: ", str(error))
 
     # 关闭连接
@@ -63,27 +61,24 @@ def prepare_data(args, access_token):
     # 填写Header信息
     audiotype= args.audiotype
     voice_name = args.voice_name
-    text = args.text
 
-    splited_text = [str(base64.b64encode(bytes(text[i:i + 1024], encoding='utf-8')), encoding='utf-8')
-                    for i in range(0, len(text), 1024)]
+    text_bytes = args.text.encode(encoding='UTF-8')
+    # 单次调用最长1024字节
+    if len(text_bytes) > 1024:
+        raise Exception("Text is too long. The maximum length of text is 1024 bytes")
+    text = str(base64.b64encode(text_bytes), encoding='UTF-8')
+    tts_params = {"language": "ZH", "voice_name": voice_name, "audiotype": audiotype, "domain": "1", "text": text}
 
-    tts_params = {"language": "ZH", "voice_name": voice_name, "audiotype": audiotype, "domain": "1"}
+    data = {"access_token": access_token, "version": "1.0", "tts_params": tts_params}
+    data = json.dumps(data)
 
-    json_list = []
-    for i in range(len(splited_text)):
-        tts_params["text"] = splited_text[i]
-        data = {"access_token": access_token, "version": "1.0", "tts_params": tts_params}
-
-        json_list.append(json.dumps(data))
-
-    return json_list
+    return data
 
 
 # 获取命令行输入参数
 def get_args():
     text = "今天天气不错哦！"
-    parser = argparse.ArgumentParser(description='ASR')
+    parser = argparse.ArgumentParser(description='tts')
     parser.add_argument('-client_secret', type=str, required=True)
     parser.add_argument('-client_id', type=str, required=True)
     parser.add_argument('-file_save_path', type=str, required=True)
@@ -128,5 +123,7 @@ if __name__ == '__main__':
         # 建立Websocket连接
         client = Client(data, uri)
         client.connect()
+
+        print('end')
     except Exception as e:
         print(e)

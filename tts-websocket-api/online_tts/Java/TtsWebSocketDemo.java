@@ -1,4 +1,4 @@
-package com.databaker.meetingsystem.base.utils;
+package com.databaker.web.tts;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -90,29 +90,24 @@ public class TtsWebSocketDemo extends WebSocketListener {
     public void onOpen(WebSocket webSocket, Response response) {
         super.onOpen(webSocket, response);
         this.startTime = timeBegin.get();
-        //该demo直接从文件中读取音频流【实际场景可能是实时从麦克风获取音频流，开发者自行修改获取音频流的逻辑即可】
         new Thread(() -> {
             //连接成功，开始发送数据
-            //此处直接按字数切分，开发者实际应用时，最好考虑标点，避免切在句子中间，产生额外的停顿
-            Integer textLength = text.length();
-            int segment = textLength / MAX_TEXT_LENGTH + 1;
-            for (int i = 0; i < segment; i++) {
-                //发送音频
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("access_token", accessToken);
-                jsonObject.put("version", "1.0");
-                //填充asr_params
-                JSONObject ttsParams = new JSONObject();
-                //domain非必填
-                ttsParams.put("domain", "1");
-                ttsParams.put("interval", "0");
-                ttsParams.put("language", "ZH");
-                ttsParams.put("voice_name", voiceName);
-                ttsParams.put("text", Base64.getEncoder().encodeToString(text.substring(i * MAX_TEXT_LENGTH, i == segment - 1 ? textLength - 1 : (i + 1) * MAX_TEXT_LENGTH).getBytes(Charset.forName("UTF-8"))));
-                jsonObject.put("tts_params", ttsParams);
-                System.out.println("data_" + i + "_sent:" + text.substring(i * MAX_TEXT_LENGTH, i == segment - 1 ? textLength - 1 : (i + 1) * MAX_TEXT_LENGTH));
-                webSocket.send(jsonObject.toString());
-            }
+            //发送文本
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("access_token", accessToken);
+            jsonObject.put("version", "1.0");
+            //填充asr_params
+            JSONObject ttsParams = new JSONObject();
+            //domain非必填
+            ttsParams.put("domain", "1");
+            ttsParams.put("interval", "0");
+            ttsParams.put("language", "ZH");
+            ttsParams.put("voice_name", voiceName);
+            ttsParams.put("text", Base64.getEncoder().encodeToString((text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) : text).getBytes(Charset.forName("UTF-8"))))
+            ;
+            jsonObject.put("tts_params", ttsParams);
+            System.out.println("dataSent:" + (text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) : text));
+            webSocket.send(jsonObject.toString());
 
             System.out.println("all data is send");
         }).start();

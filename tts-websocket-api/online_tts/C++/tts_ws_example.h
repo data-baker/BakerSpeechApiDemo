@@ -86,7 +86,7 @@ public:
     static std::string get_token(const std::string& client_id, const std::string& client_secret);
     static std::string gen_json_request(const std::string& token, const std::string& version, const tts_params& params);
 public:
-    tts_ws_example(const std::list<std::string>& json_data_list);
+    tts_ws_example(const std::string& json_data);
     virtual ~tts_ws_example();
     bool open_connection(const std::string& uri);
     void send_request_frame(websocketpp::connection_hdl hdl, const std::string& data);
@@ -106,7 +106,7 @@ private:
     websocketpp::connection_hdl         hdl_;
     boost::mutex                        hdl_mutex_;
     boost::thread*                      work_thread_;
-    std::list<std::string>              json_data_list_;
+    std::string                         json_data_;
     FILE*                               output_file_;
     std::string                         output_filename_;
 };

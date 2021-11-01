@@ -5,16 +5,15 @@
 #include <json/json.h>
 
 using std::string;
-using std::list;
 using std::ostringstream;
 using std::cout;
 using std::endl;
 
 using websocketpp::lib::bind;
 
-tts_ws_example::tts_ws_example(const std::list<std::string>& json_data_list)
+tts_ws_example::tts_ws_example(const std::string& json_data)
 {
-    json_data_list_ = json_data_list;
+    json_data_ = json_data;
     ws_client_.set_access_channels(websocketpp::log::alevel::all);
     ws_client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
     ws_client_.set_error_channels(websocketpp::log::elevel::all);
@@ -291,10 +290,7 @@ void tts_ws_example::work_thread()
 {
     output_file_ = fopen(output_filename_.c_str() , "wb");
     std::cout << "Notice: workThread begin send request data " << std::endl;
-    list<string>::const_iterator it;
-    for (it = json_data_list_.cbegin(); it != json_data_list_.cend(); ++it) {
-        send_request_frame(hdl_, *it);
-    }
+    send_request_frame(hdl_, json_data_);
     std::cout << "Notice: workThread end send request data finish" << std::endl;
 }
 
