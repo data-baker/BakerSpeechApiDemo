@@ -10,7 +10,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Base64;
+import java.util.Date;
 
 /**
  * 在线合成WebSocket API接口调用示例
@@ -53,9 +54,9 @@ public class TtsWebSocketDemo extends WebSocketListener {
     private String accessToken = getAccessToken();
 
     /**
-     * utf-8编码，不超过1024字节
+     * utf-8编码，不超过300个汉字（即900字节）
      */
-    private static Integer MAX_TEXT_LENGTH = 255;
+    private static Integer MAX_BYTE_LENGTH = 900;
 
     /**
      * 文本
@@ -103,10 +104,10 @@ public class TtsWebSocketDemo extends WebSocketListener {
             ttsParams.put("interval", "0");
             ttsParams.put("language", "ZH");
             ttsParams.put("voice_name", voiceName);
-            ttsParams.put("text", Base64.getEncoder().encodeToString((text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) : text).getBytes(Charset.forName("UTF-8"))))
-            ;
+
+            ttsParams.put("text", Base64.getEncoder().encodeToString(text.getBytes(Charset.forName("UTF-8"))));
             jsonObject.put("tts_params", ttsParams);
-            System.out.println("dataSent:" + (text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) : text));
+            System.out.println("dataSent:" + text);
             webSocket.send(jsonObject.toString());
 
             System.out.println("all data is send");
@@ -186,6 +187,12 @@ public class TtsWebSocketDemo extends WebSocketListener {
         //测试文本
         String ttsTestText = "教育部13日召开新闻通气会表示，暑期托管服务主要面向确有需求的家庭和学生，并由家长学生自愿选择参加。托管服务应以看护为主，合理组织提供一些集体游戏活动、文体活动、阅读指导、综合实践、兴趣拓展、作业辅导等服务，但不得组织集体补课、讲授新课。关于暑期托管变成第三学期的说法是不符合实际的。";
         //测试简单调用
+        if ((ttsTestText.getBytes(Charset.forName("UTF-8"))).length > MAX_BYTE_LENGTH) {
+            //单次调用长度不能超过300汉字即900字节
+            //本demo策略是长度过长则直接返回，实际使用过程中可以进行文本切割
+            System.out.println("文本不能超过300个汉字");
+            return;
+        }
         client.newWebSocket(request, new TtsWebSocketDemo(ttsTestText, file));
     }
 

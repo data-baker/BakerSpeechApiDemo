@@ -62,10 +62,11 @@ def prepare_data(args, access_token):
     audiotype= args.audiotype
     voice_name = args.voice_name
 
-    text_bytes = args.text.encode(encoding='UTF-8')
+    text = args.text
+    if len(text) > 300:
+        raise Exception("Text is too long. The maximum length of chinese character is 300")
+    text_bytes = text.encode(encoding='UTF-8')
     # 单次调用最长1024字节
-    if len(text_bytes) > 1024:
-        raise Exception("Text is too long. The maximum length of text is 1024 bytes")
     text = str(base64.b64encode(text_bytes), encoding='UTF-8')
     tts_params = {"language": "ZH", "voice_name": voice_name, "audiotype": audiotype, "domain": "1", "text": text}
 

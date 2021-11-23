@@ -41,8 +41,12 @@ int main(int argc, char* argv[])
     // websocket 地址
     string ws_url = "wss://openapi.data-baker.com/wss";
 
-    // 文本长度不能超过1024字节
+    // 文本utf8编码，长度不能超过300汉字
     string text = "今天天气不错哦";
+    if (text.length() > 900) {
+        std::cout << "text parameter more than 900 bytes!!!" << std::endl;
+        return -1;
+    }
     string version = "1.0";
     // 准备好请求参数
     string json_data = prepare_req_params(access_token, text, version);
