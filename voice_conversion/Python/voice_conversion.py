@@ -3,6 +3,7 @@ import json
 import wave
 import requests
 import websocket
+from threading import Thread
 
 
 #websocket客户端
@@ -25,8 +26,11 @@ class Client:
     # 建立连接后发送消息
     def on_open(self, ws):
         print("sending..")
-        for message in self.data:
-            ws.send(message, websocket.ABNF.OPCODE_BINARY)
+        def run(*args):
+            for message in self.data:
+                ws.send(message, websocket.ABNF.OPCODE_BINARY)
+
+        Thread(target=run).start()
 
     # 接收消息
     def on_message(self, ws, message):
