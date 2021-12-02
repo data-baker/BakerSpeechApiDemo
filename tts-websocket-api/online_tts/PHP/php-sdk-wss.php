@@ -39,10 +39,10 @@
     $data_param['tts_params']['language'] = 'ZH';
     $data_param['tts_params']['voice_name'] = 'Jiaojiao';
 
-    //发送数据请求 每次发送不超过1024个字节数据
+    //发送数据请求 每次发送不超过300个汉字
     $client = new \WebSocket\Client($url); //实例化
     $handle = fopen($file_path,'rb');
-    $audio_info = fread($handle,1024);
+    $audio_info = fread($handle,900); //三个字节即一个汉字字符（UTF-8）
     $data_param['tts_params']['text'] = base64_encode($audio_info);
     $data = json_encode($data_param);
     $client->send($data); //发送数据
