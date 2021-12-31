@@ -63,10 +63,10 @@ def prepare_data(args, access_token):
     voice_name = args.voice_name
 
     text = args.text
+    # 单次调用最长300个汉字
     if len(text) > 300:
         raise Exception("Text is too long. The maximum length of chinese character is 300")
     text_bytes = text.encode(encoding='UTF-8')
-    # 单次调用最长1024字节
     text = str(base64.b64encode(text_bytes), encoding='UTF-8')
     tts_params = {"language": "ZH", "voice_name": voice_name, "audiotype": audiotype, "domain": "1", "text": text}
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
         # 准备数据
         data = prepare_data(args, access_token)
 
-        uri = "wss://openapi.data-baker.com/wss"
+        uri = "wss://openapi.data-baker.com/tts/wsapi"
         # 建立Websocket连接
         client = Client(data, uri)
         client.connect()
