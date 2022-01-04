@@ -36,6 +36,9 @@ class Client:
     def on_message(self, ws, message):
         length = int.from_bytes(message[:4], byteorder='big', signed=False)
         json_data = json.loads((message[4: length + 4]).decode())
+        if json_data['errcode'] != 0:
+            print(json_data)
+            raise Exception
         self.converted_data += message[4 + length:]
         if json_data['lastpkg']:
             with wave.open(self.save_path, 'wb') as wavfile:
