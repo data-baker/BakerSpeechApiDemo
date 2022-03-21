@@ -91,7 +91,7 @@ public class AsrWebSocketDemo extends WebSocketListener {
                     asrParams.put("audio_format", "pcm");
                     asrParams.put("sample_rate", 16000);
                     asrParams.put("req_idx", req_idx);
-                    asrParams.put("audio_data", Base64.getEncoder().encodeToString(Arrays.copyOf(buffer, len)));
+                    asrParams.put("audio_data", Base64.getEncoder().encodeToString(Arrays.copyOf(buffer, len < 0 ? 0 : len)));
                     jsonObject.put("asr_params", asrParams);
                     webSocket.send(jsonObject.toString());
                     if (req_idx >= 0) {
