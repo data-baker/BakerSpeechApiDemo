@@ -25,7 +25,7 @@ def get_text(headers):
     response = requests.post(url, headers=headers)
     text = json.loads(response.text).get("text")
     code = json.loads(response.text).get("code")
-    if code == 20000 or code == 20001:
+    if code == 20000 or code == 20001 or code == 20005:
         return text
     else:
         raise Exception(response.text)
@@ -50,7 +50,7 @@ def get_args():
     parser.add_argument('-client_id', type=str, required=True)
     parser.add_argument('-file_path', type=str, required=True)
     parser.add_argument('--audio_format', type=str, default='wav')
-    parser.add_argument('--sample_rate', type=str, default='16000')
+    parser.add_argument('--sample_rate', type=str, default='8000')
     args = parser.parse_args()
 
     return args
