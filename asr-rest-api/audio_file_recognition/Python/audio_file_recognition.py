@@ -50,7 +50,7 @@ def get_args():
     parser.add_argument('-client_id', type=str, required=True)
     parser.add_argument('-file_path', type=str, required=True)
     parser.add_argument('--audio_format', type=str, default='wav')
-    parser.add_argument('--sample_rate', type=str, default='8000')
+    parser.add_argument('--sample_rate', type=str, default='16000')
     args = parser.parse_args()
 
     return args
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         file = open(args.file_path, 'rb')
         audio_format = args.audio_format
         sample_rate = args.sample_rate
-        headers = {'access_token': access_token, 'audio_format': audio_format, 'sample_rate': sample_rate}
+        headers = {'access_token': access_token, 'audio_format': audio_format, 'sample_rate': sample_rate, 'domain': 'common'}
         task_id = create_task(file, headers)
 
 
