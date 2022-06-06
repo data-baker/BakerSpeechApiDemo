@@ -80,6 +80,7 @@ if __name__ == '__main__':
             if text:
                 break
             else:
+                time.sleep(2)
                 print('task is processing')
         print(text['left_result'])
     except Exception as e:
