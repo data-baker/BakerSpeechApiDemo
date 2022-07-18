@@ -96,7 +96,7 @@ def get_args():
     parser.add_argument('-client_id', type=str, required=True)
     parser.add_argument('-file_path', type=str, required=True)
     parser.add_argument('-file_save_path', type=str, required=True)
-    parser.add_argument('--voice_name', type=str, default='Vc_baklong')
+    parser.add_argument('--voice_name', type=str, default='Vc_jiaojiao')
     args = parser.parse_args()
 
     return args
@@ -126,7 +126,7 @@ if __name__ == '__main__':
         # 获取access_token
         client_secret = args.client_secret
         client_id = args.client_id
-        access_token = access_token = get_access_token(client_secret, client_id)
+        access_token = get_access_token(client_secret, client_id)
 
         # 准备数据
         data = prepare_data(args, access_token)
