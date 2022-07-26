@@ -29,7 +29,8 @@ class VoicePrint:
                 'audio': audio,
                 'registerId': registerId,
                 'name': name,
-                'scoreThreshold': 30.0}
+                'scoreThreshold': 30.0,
+                'vad': 1}
         response = requests.post(url, data=json.dumps(data), headers=headers)
         if json.loads(response.text).get('err_no') == 90000:
             return True
@@ -73,7 +74,8 @@ class VoicePrint:
                 'format': args.format,
                 'audio': file,
                 'listNum': 10,
-                'scoreThreshold': 65.0}
+                'scoreThreshold': 15.0,
+                'vad': 1}
         response = requests.post(url, data=json.dumps(data), headers=headers)
         return response
 
@@ -85,7 +87,8 @@ class VoicePrint:
                 'format': 'pcm',
                 'audio': file,
                 'matchId': matchId,
-                'scoreThreshold': 65.0}
+                'scoreThreshold': 15.0,
+                'vad': 1}
         response = requests.post(url, data=json.dumps(data), headers=headers)
         return response
 
