@@ -12,8 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -24,13 +22,13 @@ type AuthInfo struct {
 }
 
 type ReqTtsParams struct {
-	Domain    string `json:"domain"`
-	Interval  string `json:"interval,omitempty"`
-	Language  string `json:"language"`
-	VoiceName string `json:"voice_name"`
-	Text      string `json:"text"`
-	Audiotype string `json:"audiotype,omitempty"`
-	Rate      string `json:"rate,omitempty"`
+	Domain     int    `json:"domain"`
+	Language   string `json:"language"`
+	VoiceName  string `json:"voice_name"`
+	Text       string `json:"text"`
+	AudioFmt   string `json:"audio_fmt,omitempty"`
+	SampleRate int    `json:"sample_rate,omitempty"`
+	Timestamp  string `json:"timestamp,omitempty"`
 }
 type WsReqParam struct {
 	AccessToken string       `json:"access_token"`
@@ -39,18 +37,17 @@ type WsReqParam struct {
 }
 
 type WsMsgData struct {
-	Idx       int    `json:"idx"`
-	AudioData string `json:"audio_data"`
-	AudioType string `json:"audio_type"`
-	Interval  string `json:"interval"`
-	IntervalX string `json:"interval_x"`
-	EndFlag   int    `json:"end_flag"`
+	Idx       int         `json:"idx"`
+	AudioData string      `json:"audio_data"`
+	AudioType string      `json:"audio_type"`
+	EndFlag   int         `json:"end_flag"`
+	Timestamp interface{} `json:"timestamp"`
 }
 type WsMsg struct {
-	Code    int       `json:"code"`
-	Message string    `json:"message"`
-	TraceId string    `json:"trace_id"`
-	Data    WsMsgData `json:"data"`
+	ErrNo  int       `json:"err_no"`
+	ErrMsg string    `json:"err_msg"`
+	LogId  string    `json:"log_id"`
+	Result WsMsgData `json:"result"`
 }
 
 const grantType string = "client_credentials"
@@ -97,9 +94,6 @@ func SendTts(urlStr string, reqParam WsReqParam) error {
 		return err
 	}
 	defer con.Close()
-	if strings.Contains(reqParam.TtsParams.VoiceName, "cc") {
-		reqParam.TtsParams.Audiotype = "5"
-	}
 	err = con.WriteJSON(reqParam)
 	if err != nil {
 		fmt.Printf("websocket write json failed. url: %s\n", urlStr)
@@ -112,7 +106,7 @@ func SendTts(urlStr string, reqParam WsReqParam) error {
 		}
 	}()
 
-	filename := reqParam.TtsParams.VoiceName + "_"
+	filename := reqParam.TtsParams.VoiceName
 	filename += ".pcm"
 	f, err = os.Create(filename)
 	if err != nil {
@@ -127,39 +121,38 @@ func SendTts(urlStr string, reqParam WsReqParam) error {
 			fmt.Printf("websocket read json failed. url: %s\n", urlStr)
 			return err
 		}
-		if msg.Code != 90000 {
-			return fmt.Errorf("error_code %d, msg: %s", msg.Code, msg.Message)
+		if 0 != msg.ErrNo {
+			return fmt.Errorf("error_code %d, msg: %s", msg.ErrNo, msg.ErrMsg)
 		}
-		fmt.Printf("index:\t%d\n", msg.Data.Idx)
-		fmt.Printf("interval:\t%s\n", msg.Data.Interval)
-		fmt.Printf("interval_x:\t%s\n", msg.Data.IntervalX)
-		fmt.Printf("endflag:\t%d\n\n", msg.Data.EndFlag)
-		if msg.Data.EndFlag == 1 {
-			return nil
+		fmt.Printf("index:\t%d\n", msg.Result.Idx)
+		fmt.Printf("endflag:\t%d\n", msg.Result.EndFlag)
+		fmt.Printf("timestamp:\t%v\n\n", msg.Result.Timestamp)
+		if len(msg.Result.AudioData) > 0 {
+			audioData, err := base64.StdEncoding.DecodeString(msg.Result.AudioData)
+			if err != nil {
+				return err
+			}
+			_, _ = writer.Write(audioData)
+			_ = writer.Flush()
 		}
-		audioData, err := base64.StdEncoding.DecodeString(msg.Data.AudioData)
-		if err != nil {
-			return err
+		if msg.Result.EndFlag == 1 {
+			break
 		}
-		_, _ = writer.Write(audioData)
-		_ = writer.Flush()
 	}
 	return nil
 }
 
 func main() {
 	var (
-		clientId, clientSecret, text, voiceName string
-		audioType, rate                         int
-		interval                                bool
+		clientId, clientSecret, text, voiceName, timeStamp string
+		sampleRate                                         int
 	)
 	flag.StringVar(&clientId, "cid", "", "client id")
 	flag.StringVar(&clientSecret, "cs", "", "client secret")
 	flag.StringVar(&text, "t", "标贝科技", "合成文本")
 	flag.StringVar(&voiceName, "v", "jingjing", "发音人")
-	flag.IntVar(&audioType, "audiotype", 4, "audiotype")
-	flag.IntVar(&rate, "rate", 0, "rate")
-	flag.BoolVar(&interval, "interval", false, "interval")
+	flag.IntVar(&sampleRate, "sr", 16000, "采样率. 默认16000")
+	flag.StringVar(&timeStamp, "timestamp", "", "时间戳参数")
 	flag.Parse()
 	if len(os.Args) < 2 {
 		flag.Usage()
@@ -169,29 +162,23 @@ func main() {
 		fmt.Println("parameter error!!!")
 		return
 	}
-	accessToken, err := GetToken("https://openapi.data-baker.com/oauth/2.0/token",
-		clientId,
-		clientSecret,
-	)
+	accessToken, err := GetToken("https://openapi.data-baker.com/oauth/2.0/token", clientId, clientSecret)
 	if err != nil {
 		fmt.Println("get access token failed!!!! please check your client_id and client_secret.")
 		return
 	}
-	base64Text := base64.StdEncoding.EncodeToString([]byte(text))
 	param := WsReqParam{
 		AccessToken: accessToken,
-		Version:     "1.0",
+		Version:     "2.1",
 		TtsParams: ReqTtsParams{
-			Text:      base64Text,
-			Language:  "ZH",
-			Domain:    "1",
-			VoiceName: voiceName,
-			Audiotype: strconv.Itoa(audioType),
-			Rate:      strconv.Itoa(rate),
+			Text:       text,
+			VoiceName:  voiceName,
+			Domain:     1,
+			Language:   "ZH",
+			AudioFmt:   "PCM",
+			SampleRate: sampleRate,
+			Timestamp:  timeStamp,
 		},
-	}
-	if interval {
-		param.TtsParams.Interval = "1"
 	}
 	err = SendTts("wss://openapi.data-baker.com/tts/wsapi", param)
 	if err != nil {

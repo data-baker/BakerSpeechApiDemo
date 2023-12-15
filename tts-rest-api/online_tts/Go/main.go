@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -20,16 +19,21 @@ type AuthInfo struct {
 	ExpiresIn   int    `json:"expires_in"`
 	Scope       string `json:"scope"`
 }
+
+type ReqParam struct {
+	Version     string       `json:"version"`
+	AccessToken string       `json:"access_token"`
+	TtsParams   ReqTtsParams `json:"tts_params"`
+}
+
 type ReqTtsParams struct {
-	Domain      string `json:"domain"`
-	Interval    string `json:"interval,omitempty"`
-	Language    string `json:"language"`
-	VoiceName   string `json:"voice_name"`
-	Text        string `json:"text"`
-	Audiotype   string `json:"audiotype"`
-	Version     string `json:"version"`
-	Rate        string `json:"rate,omitempty"`
-	AccessToken string `json:"access_token"`
+	Domain     int    `json:"domain"`
+	Language   string `json:"language"`
+	VoiceName  string `json:"voice_name"`
+	Text       string `json:"text"`
+	AudioFmt   string `json:"audio_fmt"`
+	SampleRate int    `json:"sample_rate,omitempty"`
+	Timestamp  string `json:"timestamp,omitempty"`
 }
 
 const grantType string = "client_credentials"
@@ -69,39 +73,13 @@ func GetToken(reqUrl, clientId, clientSecret string) (string, error) {
 	return authInfo.AccessToken, nil
 }
 
-func SendTts(URL string, reqParam ReqTtsParams) (string, error) {
+func SendTts(urlStr string, reqParam ReqParam) (string, error) {
 	// 超时时间：60秒
 	client := &http.Client{Timeout: 60 * time.Second}
-	reqUrl := URL
+	reqUrl := urlStr
 	fmt.Printf("reqUrl: %s\n\n", reqUrl)
-	var resp *http.Response
-	var err error
-	if 0 == strings.Compare("2", reqParam.Version) {
-		jsonData, _ := json.Marshal(&reqParam)
-		resp, err = client.Post(reqUrl, "application/json", bytes.NewReader(jsonData))
-	} else {
-		urls := url.Values{}
-		urls.Add("text", reqParam.Text)
-		urls.Add("voice_name", reqParam.VoiceName)
-		urls.Add("access_token", reqParam.AccessToken)
-		urls.Add("domain", "1")
-		urls.Add("language", "zh")
-		urls.Add("interval", reqParam.Interval)
-		if strings.Contains(reqParam.VoiceName, "cc") {
-			urls.Add("audiotype", "6")
-			urls.Add("rate", "1")
-		} else {
-			if len(reqParam.Audiotype) > 0 {
-				urls.Add("audiotype", reqParam.Audiotype)
-			}
-			if len(reqParam.Rate) > 0 {
-				urls.Add("rate", reqParam.Rate)
-			}
-		}
-		reqUrl += "?"
-		reqUrl += urls.Encode()
-		resp, err = client.Get(reqUrl)
-	}
+	jsonData, _ := json.Marshal(&reqParam)
+	resp, err := client.Post(reqUrl, "application/json", bytes.NewReader(jsonData))
 	if err != nil {
 		fmt.Printf("send http tts request failed, err: %s \n", err)
 		return "", err
@@ -117,36 +95,42 @@ func SendTts(URL string, reqParam ReqTtsParams) (string, error) {
 		return "", err
 	}
 	contentType := resp.Header.Get("Content-Type")
+	fmt.Println(contentType)
 	if strings.Contains(contentType, "audio/") {
-		logid := resp.Header.Get("logid")
-		intervalInfo := resp.Header.Get("interval-info")
-		intervalInfoX := resp.Header.Get("interval-info-x")
-		fmt.Printf("interval:\t%s\ninterval_x:\t%s\n", intervalInfo, intervalInfoX)
-		filename := reqParam.VoiceName + "_"
-		filename += logid
+		filename := reqParam.TtsParams.VoiceName
 		filename += "."
 		filename += strings.TrimLeft(contentType, "audio/")
-		fmt.Printf("output:\t\t%s\n", filename)
-		_ = ioutil.WriteFile(filename, result, 0755)
+		if 0 == strings.Compare(reqParam.TtsParams.Timestamp, "both") || 0 == strings.Compare(reqParam.TtsParams.
+			Timestamp, "phone") || 0 == strings.Compare(reqParam.TtsParams.Timestamp, "word") {
+			length := (int(result[0]) << 24) + (int(result[1]) << 16) + (int(result[2]) << 8) + int(result[3])
+			if length > len(result) {
+				return "", errors.New("response data length error")
+			}
+			jsonData := result[4 : length+4]
+			audioData := result[length+4:]
+			fmt.Printf("timestamp json string:\t%s\n", jsonData)
+			_ = ioutil.WriteFile(filename, audioData, 0755)
+		} else {
+			_ = ioutil.WriteFile(filename, result, 0755)
+		}
+		fmt.Printf("output:\t%s\n", filename)
 		return "", nil
 	}
-
 	return string(result), fmt.Errorf("tts work failed")
 }
 
 func main() {
 	var (
-		clientId, clientSecret, text, voiceName string
-		audioType, rate                         int
-		interval                                bool
+		clientId, clientSecret, text, voiceName, audioFmt, timeStamp string
+		sampleRate                                                   int
 	)
 	flag.StringVar(&clientId, "cid", "", "client id")
 	flag.StringVar(&clientSecret, "cs", "", "client secret")
-	flag.StringVar(&text, "t", "标贝科技", "合成文本")
-	flag.StringVar(&voiceName, "v", "jingjing", "发音人")
-	flag.IntVar(&audioType, "audiotype", 6, "audiotype")
-	flag.IntVar(&rate, "rate", 0, "rate")
-	flag.BoolVar(&interval, "interval", false, "interval")
+	flag.StringVar(&text, "t", "标贝科技", "合成文本, 默认: 标贝科技")
+	flag.StringVar(&voiceName, "v", "jingjing", "发音人, 默认Jingjing")
+	flag.StringVar(&audioFmt, "af", "mp3", "audio格式. 默认mp3")
+	flag.IntVar(&sampleRate, "sr", 16000, "采样率. 默认16000")
+	flag.StringVar(&timeStamp, "timestamp", "", "时间戳参数")
 	flag.Parse()
 	if len(os.Args) < 2 {
 		flag.Usage()
@@ -156,29 +140,27 @@ func main() {
 		fmt.Println("parameter error!!!")
 		return
 	}
-	accessToken, err := GetToken("https://openapi.data-baker.com/oauth/2.0/token",
-		clientId,
-		clientSecret,
-	)
+	accessToken, err := GetToken("https://openapi.data-baker.com/oauth/2.0/token", clientId, clientSecret)
 	if err != nil {
 		fmt.Println("get access token failed!!!! please check your client_id and client_secret.")
 		return
 	}
-	param := ReqTtsParams{
+	param := ReqParam{
 		AccessToken: accessToken,
-		Text:        text,
-		Language:    "ZH",
-		Domain:      "1",
-		VoiceName:   voiceName,
-		Audiotype:   strconv.Itoa(audioType),
-		Rate:        strconv.Itoa(rate),
-	}
-	if interval {
-		param.Interval = "1"
+		Version:     "2.1",
+		TtsParams: ReqTtsParams{
+			Domain:     1,
+			Language:   "ZH",
+			VoiceName:  voiceName,
+			Text:       text,
+			AudioFmt:   audioFmt,
+			SampleRate: sampleRate,
+			Timestamp:  timeStamp,
+		},
 	}
 	body, err := SendTts("https://openapi.data-baker.com/tts", param)
 	if err != nil {
-		fmt.Printf("send tts http request failed. result: %s \n", body)
+		fmt.Printf("send tts http request failed. err:%s \n result: %s \n", err.Error(), body)
 		return
 	}
 	fmt.Println("send http request success.")
