@@ -5,19 +5,10 @@
 
 using namespace std;
 
-string prepare_req_params(const std::string& access_token, const std::string& text, const std::string& version)
-{
-    tts_params params;
-    params.text = text;
-    params.language = "ZH";
-    params.voice_name = "Lingling";
-    params.interval = "1";
-    return tts_ws_example::gen_json_request(access_token, version, params);;
-}
 
 void usage()
 {
-    std::cout << "### this is a websocket api demo for tts" << std::endl;
+    std::cout << "### this is the websocket api demo for tts" << std::endl;
     std::cout << "###  tts_ws_example [client_id] [client_secret]" << std::endl;
 }
 
@@ -39,17 +30,20 @@ int main(int argc, char* argv[])
         return -1;
     }
     // websocket 地址
-    string ws_url = "wss://openapi.data-baker.com/wss";
+    string ws_url = "wss://openapi.data-baker.com/tts/wsapi";
 
     // 文本utf8编码，长度不能超过300汉字
-    string text = "今天天气不错哦";
-    if (text.length() > 900) {
-        std::cout << "text parameter more than 900 bytes!!!" << std::endl;
-        return -1;
-    }
-    string version = "1.0";
+    string text = "欢迎使用标贝科技公司语音合成服务";
+    string version = "2.1";
+
+    tts_params params;
+    params.voice_name = "Jingjing";
+    params.text = text;
+    params.timestamp = "both";
+    params.sample_rate = 16000;
+    params.audio_fmt = "PCM";
     // 准备好请求参数
-    string json_data = prepare_req_params(access_token, text, version);
+    string json_data = tts_ws_example::build_json(access_token, version, params);
 
     // 启动websocket client
     tts_ws_example ws_client(json_data);

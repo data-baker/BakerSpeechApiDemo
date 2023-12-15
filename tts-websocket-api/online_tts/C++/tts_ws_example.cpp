@@ -11,38 +11,6 @@ using std::endl;
 
 using websocketpp::lib::bind;
 
-tts_ws_example::tts_ws_example(const std::string& json_data)
-{
-    json_data_ = json_data;
-    ws_client_.set_access_channels(websocketpp::log::alevel::all);
-    ws_client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
-    ws_client_.set_error_channels(websocketpp::log::elevel::all);
-
-    ws_client_.init_asio();
-    ws_client_.set_open_handshake_timeout(10000);
-
-    ws_client_.set_tls_init_handler(bind(&tts_ws_example::on_tls_init,this, websocketpp::lib::placeholders::_1));
-    ws_client_.set_open_handler(bind(&tts_ws_example::on_open,this, websocketpp::lib::placeholders::_1));
-    ws_client_.set_close_handler(bind(&tts_ws_example::on_close,this, websocketpp::lib::placeholders::_1));
-    ws_client_.set_fail_handler(bind(&tts_ws_example::on_fail,this, websocketpp::lib::placeholders::_1));
-    ws_client_.set_message_handler(bind(&tts_ws_example::on_message, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
-
-    work_thread_ = NULL;
-    output_file_ = NULL;
-    output_filename_ = "abc.pcm";
-}
-
-tts_ws_example::~tts_ws_example()
-{
-    stop_io_service();
-    if (work_thread_ != NULL) {
-        work_thread_->join();
-        delete work_thread_;
-        work_thread_ = NULL;
-    }
-    close_output_file();
-}
-
 string tts_ws_example::get_token(const string& client_id, const string& client_secret)
 {
     string url = "https://openapi.data-baker.com/oauth/2.0/token?grant_type=";
@@ -67,29 +35,54 @@ string tts_ws_example::get_token(const string& client_id, const string& client_s
     return token;
 }
 
-string tts_ws_example::gen_json_request(const std::string& token, const std::string& version, const tts_params& params)
+string tts_ws_example::build_json(const std::string& token, const std::string& version, const tts_params& params)
 {
     Json::Value root;
-    Json::Value tts_params;
     Json::FastWriter writer;
-
-    tts_params["text"] = websocketpp::base64_encode((const unsigned char*)params.text.c_str(), params.text.length());
-    tts_params["domain"] = params.domain;
-    tts_params["language"] = params.language;
-    tts_params["voice_name"] = params.voice_name;
-    tts_params["speed"] = params.speed;
-    tts_params["volume"] = params.volume;
-    tts_params["pitch"] = params.pitch;
-    tts_params["audiotype"] = params.audiotype;
-    tts_params["interval"] = params.interval;
-    tts_params["spectrum"] = params.spectrum;
-    tts_params["spectrum_8k"] = params.spectrum_8k;
-
+    Json::Value tts_params_node;
+    tts_params_node["domain"] = 1;
+    tts_params_node["language"] = "ZH";
+    tts_params_node["text"] = params.text;
+    tts_params_node["voice_name"] = params.voice_name;
+    tts_params_node["audio_fmt"] = params.audio_fmt;
+    tts_params_node["sample_rate"] = params.sample_rate;
+    tts_params_node["timestamp"] = params.timestamp;
+    root["tts_params"] = tts_params_node;
     root["access_token"] = token;
-    root["version"]      = version;
-    root["tts_params"]   = tts_params;
-
+    root["version"] = version;
     return writer.write(root);
+}
+
+tts_ws_example::tts_ws_example(const std::string& json_data)
+{
+    json_data_ = json_data;
+    ws_client_.set_access_channels(websocketpp::log::alevel::all);
+    ws_client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
+    ws_client_.set_error_channels(websocketpp::log::elevel::all);
+
+    ws_client_.init_asio();
+    ws_client_.set_open_handshake_timeout(10000);
+
+    ws_client_.set_tls_init_handler(bind(&tts_ws_example::on_tls_init,this, websocketpp::lib::placeholders::_1));
+    ws_client_.set_open_handler(bind(&tts_ws_example::on_open,this, websocketpp::lib::placeholders::_1));
+    ws_client_.set_close_handler(bind(&tts_ws_example::on_close,this, websocketpp::lib::placeholders::_1));
+    ws_client_.set_fail_handler(bind(&tts_ws_example::on_fail,this, websocketpp::lib::placeholders::_1));
+    ws_client_.set_message_handler(bind(&tts_ws_example::on_message, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
+
+    work_thread_ = NULL;
+    output_file_ = NULL;
+    output_filename_ = "output_ws.pcm";
+}
+
+tts_ws_example::~tts_ws_example()
+{
+    stop_io_service();
+    if (work_thread_ != NULL) {
+        work_thread_->join();
+        delete work_thread_;
+        work_thread_ = NULL;
+    }
+    close_output_file();
 }
 
 void tts_ws_example::recv_audio_frame(const std::string& msg)
@@ -102,22 +95,22 @@ void tts_ws_example::recv_audio_frame(const std::string& msg)
         std::cout << "response format error. " << std::endl;
         return ;
     }
-    if (!root.isMember("code")) {
+    if (!root.isMember("err_no")) {
         std::cout << "response code is null. " << std::endl;
         return;
     }
-    int code = root["code"].asInt();
+    int code = root["err_no"].asInt();
     // ·µ»Ø´íÎó
-    if (code != 90000) {
+    if (code != 0) {
         return;
     }
-    if (!root.isMember("data")) {
+    if (!root.isMember("result")) {
         std::cout << "response data is null. " << std::endl;
         return;
     }
-    Json::Value& dataNode = root["data"];
-    int end_flag = dataNode["end_flag"].asInt();
-    string audio_data = dataNode["audio_data"].asString();
+    Json::Value& resultNode = root["result"];
+    int end_flag = resultNode["end_flag"].asInt();
+    string audio_data = resultNode["audio_data"].asString();
     std::cout << "audio_data size: " << audio_data.size() << std::endl;
     if (audio_data.size() > 0) {
         string audio_data_decode = websocketpp::base64_decode(audio_data);

@@ -14,4 +14,5 @@ LIBS 		=	-lcurl -lcrypto -lssl -ljson_libmt -lpthread
 ${TARGET}: ${SRCS}
 	$(CC) $(SRCS) $(INC) $(C_FLAGS) -o $(TARGET) $(LIBSPATH) $(LIBS) 
 clean:
-	rm $(TARGET)
+	rm -f $(TARGET)
+	rm -f *.o
