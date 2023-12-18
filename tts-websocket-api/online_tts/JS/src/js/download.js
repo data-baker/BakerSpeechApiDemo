@@ -1,4 +1,8 @@
-
+/*
+ * @Autor: lycheng
+ * @Date: 2019-12-27 15:21:38
+ * @Description: 
+ */
 function writeString(data, offset, str) {
   for (var i = 0; i < str.length; i++) {
     data.setUint8(offset + i, str.charCodeAt(i))
@@ -7,11 +11,11 @@ function writeString(data, offset, str) {
 
 /**
  * 加wav头
- * @param {音频arrayBuffer} bytes
- * @param {采样率} sampleRate
- * @param {声道数} numChannels
- * @param {sampleBits} oututSampleBits
- * @param {小端字节} littleEdian
+ * @param {arrayBuffer} bytes 音频
+ * @param {Number} sampleRate 采样率
+ * @param {Number} numChannels 声道数
+ * @param {Number} oututSampleBits
+ * @param {Number} littleEdian
  */
 function encodeWAV(
   bytes,
@@ -76,7 +80,7 @@ function encodeWAV(
 }
 
 function downloadWAV(audioData, sampleRate, oututSampleBits) {
-  let wavData = encodeWAV(audioData, sampleRate||44100, 1, oututSampleBits||16)
+  let wavData = encodeWAV(audioData, sampleRate||44100, 1, oututSampleBits||16) 
   let blob = new Blob([wavData], {
     type: 'audio/wav',
   })

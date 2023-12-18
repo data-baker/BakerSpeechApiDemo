@@ -1,121 +1,43 @@
 <template>
   <div>
-    <div style="margin-left: 20px;">
-      <h2>标贝科技-TTS-Websocket-JS-Demo</h2>
-      <div><a href="https://www.data-baker.com/specs/file/tts_api_websocket" target="_blank">TTS-Websocket-文档地址</a></div>
-    </div>
-    <div class="page-main">
-      <div>
-        <label for="input_text"></label><textarea id="input_text" placeholder="请输入您要合成的文本" maxlength="300" v-model="text"></textarea>
-      </div>
-      <div>
-        <button @click="play">{{ btnText }}</button>
-        <button @click="download('pcm')">下载pcm</button>
-        <button @click="download('wav')">下载wav</button>
-      </div>
-    </div>
+    <h2 style="text-align: center;">标贝科技-TTS-DEMO</h2>
+
+    <el-tabs type="border-card" v-model="typeTabs">
+      <el-tab-pane label="v1-webSocket" name="v1ws">
+        <wsv1></wsv1>
+      </el-tab-pane>
+      <el-tab-pane label="v2-webSocket" name="v2ws">
+        <wsv2></wsv2>
+      </el-tab-pane>
+      <el-tab-pane label="v2-RESTfUl" name="v2RESTfUl">
+        <RESTfUlV2></RESTfUlV2>
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
 <script>
-import TTSRecorder from './js/ws'
-let initTts = new TTSRecorder();
-import {downloadPCM, downloadWAV} from './js/download'
+import wsv1 from './components/v1/ws/index'
+import wsv2 from './components/v2/ws/index'
+import RESTfUlV2 from './components/v2/RESTful/index'
 export default {
   name: 'App',
+  components: {
+    wsv1,
+    wsv2,
+    RESTfUlV2
+  },
   data() {
     return {
-      text: '你好！标贝科技',
-      btnText: "立即合成"
+      typeTabs: 'v2ws',
     }
   },
-  mounted() {
-    const that = this;
-    initTts.onWillStatusChange = function(oldStatus, status) {
-      let btnText = {
-        init: '立即合成',
-        ttsIng: '正在合成',
-        play: '停止播放',
-        endPlay: '重新播放',
-        errorTTS: '合成失败',
-      };
-      that.btnText = btnText[status];
-    }
-  },
-  methods: {
-    play() {
-      console.log(initTts.status);
-      if (initTts.status === 'init') {
-        // 设置请求参数
-        initTts.setParams({
-          text: this.text
-        });
-        initTts.start();
-      } else if (initTts.status === 'endPlay' || initTts.status === 'errorTTS') {
-        initTts.start();
-      } else {
-        initTts.stop();
-      }
-    },
-    download(val) {
-      if (val === 'pcm') {
-        if (initTts.rawAudioData.length){
-          downloadPCM(new Int16Array(initTts.rawAudioData))
-        } else {
-          alert('请先合成')
-        }
-      } else if (val === 'wav') {
-        if (initTts.rawAudioData.length){
-          downloadWAV(new DataView(new Int16Array(initTts.rawAudioData).buffer), 16000, 16)
-        } else {
-          alert('请先合成')
-        }
-      }
-    }
-  },
-  watch: {
-    'text': function () {
-      initTts.setStatus('init');
-      // 设置请求参数
-      initTts.setParams({
-        text: this.text
-      });
-    }
-  }
+  mounted() {},
+  methods: { },
 }
 </script>
 
 <style>
-  body,html {
-    width: 100%;
-    padding: 0;
-    margin: 0;
-  }
-  input:focus, textarea:focus {
-    outline: none;
-  }
-  button {
-    width: 110px;
-    height: 35px;
-    border: none;
-    background: rgb(7, 96, 235);
-    color: #ffffff;
-    line-height: 3px;
-    margin-right: 15px;
-    margin-top: 15px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .page-main {
-    width: 80%;
-    margin: 50px auto;
-  }
-  #input_text {
-    width: 80%;
-    height: 300px;
-    border: 1px rgba(7, 96, 235, 0.78) solid;
-    border-radius: 5px;
-    padding: 5px;
-  }
+
 
 </style>
