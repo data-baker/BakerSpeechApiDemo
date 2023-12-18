@@ -35,7 +35,7 @@ public class TtsWebSocketDemo extends WebSocketListener {
      */
     public static String tokenUrl = "https://openapi.data-baker.com/oauth/2.0/token?grant_type=client_credentials&client_secret=%s&client_id=%s";
 
-    private static final String hostUrl = "wss://openapi.data-baker.com/wss";
+    private static final String hostUrl = "wss://openapi.data-baker.com/tts/wsapi";
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyy-MM-dd HH:mm:ss.SSS");
 

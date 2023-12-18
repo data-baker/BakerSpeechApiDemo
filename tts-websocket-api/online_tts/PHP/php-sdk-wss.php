@@ -29,7 +29,7 @@
     //$access_token = '***';
 
     //2.在线合成
-    $url = 'wss://openapi.data-baker.com/wss';
+    $url = 'wss://openapi.data-baker.com/tts/wsapi';
     $file_path = './test.txt';//文件路径 必须utf-8编码
 
     //定义请求方法
