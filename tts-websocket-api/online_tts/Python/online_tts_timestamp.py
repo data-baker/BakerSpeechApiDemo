@@ -34,15 +34,17 @@ class Client:
     # 接收消息
     def on_message(self, ws, message):
         message = json.loads(message)
-        code = message["code"]
-        if 'subtitles_list' in message["data"]:
-            print(message["data"]['subtitles_list'])
-        if code != 90000:
+        print(message)
+        code = message["err_no"]
+        if code != 0:
             # 打印接口错误
             print(message)
+            ws.close()
         else:
-            self.audio_data += base64.b64decode(bytes(message["data"]["audio_data"], encoding='utf-8'))
-            if message.get("data")["end_flag"] == 1:
+            if 'timestamp' in message["result"]:
+                print(message["result"]['timestamp'])
+            self.audio_data += base64.b64decode(bytes(message["result"]["audio_data"], encoding='utf-8'))
+            if message.get("result")["end_flag"] == 1:
                 with wave.open('test.wav', 'wb') as wavfile:
                     wavfile.setparams((1, 2, 16000, 0, 'NONE', 'NONE'))
                     wavfile.writeframes(self.audio_data)
@@ -54,26 +56,22 @@ class Client:
         print("error: ", str(error))
 
     # 关闭连接
-    def on_close(ws):
+    def on_close(ws, *args):
         print("client closed.")
 
 
 # 准备数据
 def prepare_data(args, access_token):
-
     # 填写Header信息
-    audiotype= args.audiotype
     voice_name = args.voice_name
 
     text = args.text
-    # 单次调用最长300个汉字
+    # 单次调用不超过300个汉字
     if len(text) > 300:
         raise Exception("Text is too long. The maximum length of chinese character is 300")
-    text_bytes = text.encode(encoding='UTF-8')
-    text = str(base64.b64encode(text_bytes), encoding='UTF-8')
-    tts_params = {"language": "ZH", "voice_name": voice_name, "audiotype": audiotype, "domain": "1", "text": text, 'interval': '1', 'enable_subtitles': '1'}
+    tts_params = {"language": "ZH", "voice_name": voice_name, "domain": "1", "text": text, "timestamp": "both"}
 
-    data = {"access_token": access_token, "version": "1.0", "tts_params": tts_params}
+    data = {"access_token": access_token, "version": "2.1", "tts_params": tts_params}
     data = json.dumps(data)
 
     return data
@@ -85,12 +83,9 @@ def get_args():
     parser = argparse.ArgumentParser(description='tts')
     parser.add_argument('-client_secret', type=str, required=True)
     parser.add_argument('-client_id', type=str, required=True)
-    parser.add_argument('-file_save_path', type=str, required=True)
     parser.add_argument('--text', type=str, default=text)
-    parser.add_argument('--audiotype', type=str, default='4')
-    parser.add_argument('--voice_name', type=str, default='beixi')
+    parser.add_argument('--voice_name', type=str, default='Jingjing')
     args = parser.parse_args()
-
     return args
 
 
@@ -131,3 +126,9 @@ if __name__ == '__main__':
         print('end')
     except Exception as e:
         print(e)
+
+
+"""
+pip install websocket-client
+python online_tts_timestamp.py -client_secret=your_client_secret -client_id=your_client_id --text=标贝真棒
+"""
